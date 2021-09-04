@@ -1,4 +1,9 @@
-# This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
+version: 2.1
+
+orbs:
+  node: circleci/node@4.1
+  docker: circleci/docker@1.6.0
+
 jobs:
   build-and-push:
     environment:
@@ -22,14 +27,24 @@ jobs:
       - run:
           command: |
             echo "Digest is: $(</tmp/digest.txt)"
-
-version: 2.1
-
-orbs:
-  docker: circleci/docker@1.6.0
-
+  deploy:
+    executor: docker/docker
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - $SSH_KEY_FINGERPRINT
+      - run: ssh -oStrictHostKeyChecking=no $DEPLOYED_USER@$DEPLOYED_SERVER './deploy.sh'
 workflows:
   commit:
     jobs:
-      - build-and-push
-
+      - node/test
+      - build-and-push:
+          requires:
+            - "node/test"
+          filters:
+            branches:
+              only:
+                - main
+      - deploy:
+         requires:
+          - build-and-push
