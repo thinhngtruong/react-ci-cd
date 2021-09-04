@@ -1,16 +1,11 @@
-FROM node:13.12.0-alpine AS myapp
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install && npm install react-scripts@3.4.1 -g --silent 
-
-COPY . ./
-
+# build stage
+FROM node:13-alpine as build-stage
+WORKDIR /app
+COPY . .
+RUN npm install
 RUN npm run build
 
-FROM nginx:latest
-COPY --from=myapp /usr/src/app/build /usr/share/nginx/html
-
+# production stage
+FROM nginx:1.17-alpine as production-stage
+COPY --from=build-stage /app/build /usr/share/nginx/html
 CMD ["nginx", "-g", "daemon off;"]
