@@ -13,4 +13,4 @@ RUN npm run build
 FROM nginx:latest
 COPY --from=myapp /usr/src/app/build /usr/share/nginx/html
 
-CMD nginx -g 'daemon off;'
+CMD ["nginx", "-g", "daemon off;"]
